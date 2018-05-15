@@ -1,3 +1,8 @@
+#cosas que corregir
+    '''
+    recurisividad cuando abrimos una bomba, aunque en ese caso de igual porque mostramos tablero final
+    recursividad cuando hay celda marcada cerca que da error
+    '''
 #*****IMPORTACIONES NECESARIAS*******
 
 import pygtk
@@ -33,10 +38,13 @@ class Celda:
                 self.cerrada = False
 
     def actualizar(self,widget=None):
-        if sef-cerrada:
+        if not self.cerrada:
             self.boton.get_image().set_from_pixbuf(self.imagenes[self.bombas_alrededor])
-        elif self.marcada:
-            self.boton.get_image().set_from_pixbuf(self.imagenes[8])
+        else:
+            if self.marcada:
+                self.boton.get_image().set_from_pixbuf(self.imagenes[8])
+            else:
+                self.boton.get_image().set_from_pixbuf(self.imagenes[7])
 #************Tablero utilizado por detras***************
 class Tablero:
     def __init__(self,filas,columnas,bombas,widget = None):
@@ -63,7 +71,9 @@ class Tablero:
         boton.set_image(gtk.Image())
         boton.set_relief(gtk.RELIEF_NONE)
         boton.get_image().set_from_pixbuf(self.imagenes[7])
-        boton.connect('clicked', self.movimiento,boton)
+        #boton.connect('clicked', self.movimiento,boton)
+        boton.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+        boton.connect("button-release-event", self.movimiento,boton)
         boton.show()
         return boton
 
@@ -86,13 +96,17 @@ class Tablero:
                 if self.tabla[fila + rango[a][0]][columna + rango[a][1]].marcada == True:
                     contador-=1
         self.tabla[fila][columna].bombas_alrededor = contador
-    def movimiento(self,widget, boton):
+    def movimiento(self,widget,event, boton):
         i,j = self.posicion_boton(boton)
-        if self.tabla[i][j].marcada == False:
-            if self.tabla[i][j].bombas_alrededor == 0:
-                self.abrir_alrededor(i,j)
-            self.tabla[i][j].abrir()
-        
+        if event.button == 1:
+            if self.tabla[i][j].marcada == False:
+                if self.tabla[i][j].bombas_alrededor == 0:
+                    self.abrir_alrededor(i,j)
+                self.tabla[i][j].abrir()
+        if event.button == 3:
+            self.tabla[i][j].marcada = not self.tabla[i][j].marcada
+            self.tabla[i][j].actualizar()
+
         
     #***** PRUEBA
 

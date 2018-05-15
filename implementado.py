@@ -66,23 +66,12 @@ class Tablero:
     def movimiento(self,widget, boton):
         i,j = self.posicion_boton(boton)
         if self.tabla[i][j].marcada == False:
+            if self.tabla[i][j].bombas_alrededor == 0:
+                self.abrir_alrededor(i,j)
             self.tabla[i][j].abrir()
-        if self.tabla[i][j].bombas_alrededor == 0:
-            self.abrir_alrededor(i,j)
+        
         
     #***** PRUEBA
-    def abrir_alrededor(self,fila,columna):
-        self.tabla[fila][columna].abrir()
-        if self.tabla[fila][columna].bombas_alrededor == 0: #or self.tabla[fila][columna].delante == '?':
-            if fila%2 == 0:
-                rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
-            else:
-                rango = [(-1, -1),(-1, 0),(0, -1),(0, 1),(1, -1),(1, 0)]#par
-                
-            for a in range(len(rango)):#len(rango)
-                if not self.fuera_limites(fila + rango[a][0],columna + rango[a][1]):
-                    if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == False :
-                        self.abrir_alrededor(fila + rango[a][0],columna + rango[a][1])
 
     
     def posicion_boton(self,boton):
@@ -108,6 +97,19 @@ class Tablero:
                                 self.tabla[i][j].detras= False
     def fuera_limites(self,fila,columna):
         return (fila<0 or fila > self.filas-1) or (columna < 0 or columna > self.columnas-1) 
+    def abrir_alrededor(self,fila,columna):
+        self.tabla[fila][columna].abrir()
+        if self.tabla[fila][columna].bombas_alrededor == 0: #or self.tabla[fila][columna].delante == '?':
+            if fila%2 == 0:
+                rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
+            else:
+                rango = [(-1, -1),(-1, 0),(0, -1),(0, 1),(1, -1),(1, 0)]#par
+                
+            for a in range(len(rango)):#len(rango)
+                if not self.fuera_limites(fila + rango[a][0],columna + rango[a][1]):
+                    if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == False :
+                        self.abrir_alrededor(fila + rango[a][0],columna + rango[a][1])
+
     def bombas_alrededor(self, fila, columna):
         
         contador = 0
@@ -274,10 +276,8 @@ class Menu:
     def destroy(self, widget, data=None):
         gtk.main_quit()
     '''
-        
-
-
 #********PROGRAMA PRINCIPAL*********
+
 def main():
     gtk.main()
     return 0

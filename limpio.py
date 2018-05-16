@@ -2,7 +2,7 @@
     
     #recurisividad cuando abrimos una bomba, aunque en ese caso de igual porque mostramos tablero final
     #recursividad cuando hay celda marcada cerca que da error
-    
+    #no poder marcar una celda abierta
 #*****IMPORTACIONES NECESARIAS*******
 
 import pygtk
@@ -73,6 +73,7 @@ class Tablero:
             lista.append(gtk.gdk.pixbuf_new_from_file(fotos[i]))
         
         return lista
+    
     def crear_boton(self):
         boton=gtk.Button()
         boton.set_image(gtk.Image())
@@ -107,20 +108,18 @@ class Tablero:
         
     def movimiento(self,widget,event, boton):
         i,j = self.posicion_boton(boton)
-        if event.button == 1:
+        if event.button == 1 and self.tabla[i][j].cerrada:
             if self.tabla[i][j].marcada == False:
                 if self.tabla[i][j].bombas_alrededor == 0:
                     self.abrir_alrededor(i,j)
                 self.tabla[i][j].abrir()
+                
         if event.button == 3:
             self.tabla[i][j].marcada = not self.tabla[i][j].marcada
+            if self.todo_marcado(): Ventana_Ganado()
             self.comprobar_alrededor(i,j)
             self.tabla[i][j].actualizar()
-
-        
-    #***** PRUEBA
-
-    
+            
     def posicion_boton(self,boton):
         a=0
         
@@ -128,6 +127,7 @@ class Tablero:
             for j in range(self.columnas):
                 if self.tabla[i][j].boton == boton:
                     return [i,j]
+    
     def rellenar_bombas(self):
         minasA = 0
         while(minasA<self.cant_bombas):
@@ -142,8 +142,10 @@ class Tablero:
                                 minasA+=1
                             elif(self.tabla[i][j].detras != True):
                                 self.tabla[i][j].detras= False
+    
     def fuera_limites(self,fila,columna):
         return (fila<0 or fila > self.filas-1) or (columna < 0 or columna > self.columnas-1) 
+    
     def abrir_alrededor(self,fila,columna):
         self.tabla[fila][columna].abrir()
         if self.tabla[fila][columna].bombas_alrededor == 0 and not self.tabla[fila][columna].detras: #or self.tabla[fila][columna].delante == '?':
@@ -156,6 +158,7 @@ class Tablero:
                 if not self.fuera_limites(fila + rango[a][0],columna + rango[a][1]):
                     if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == True :
                         self.abrir_alrededor(fila + rango[a][0],columna + rango[a][1])
+   
     def comprobar_alrededor(self,fila,columna):
         if fila%2 == 0:
             rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
@@ -167,6 +170,17 @@ class Tablero:
                     self.bombas_alrededor(fila + rango[a][0],columna + rango[a][1])
                 if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == False:
                     self.tabla[fila + rango[a][0]][columna + rango[a][1]].actualizar()
+    
+    def todo_marcado(self):
+        contador = self.cant_bombas
+        for i in range(self.filas):
+            for j in range(self.columnas):
+                #return ( False) if (self.tabla[i][j].detras and not self.tabla[i][j].marcada) else ( True)
+                if (self.tabla[i][j].detras and not self.tabla[i][j].marcada):
+                    contador-=0
+                if contador != 0:
+                    return False
+        return True
 class Buscaminas:
     def __init__(self,widget,filas,columnas,bombas):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -270,7 +284,26 @@ class Menu:
     def destroy(self, widget, data=None):
         gtk.main_quit()
     
-
+class Ventana_Ganado:
+    def __init__(self):
+        self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.sacar_pantalla()
+    def sacar_pantalla(self):
+        self.window.set_title("WIN")
+        self.window.set_border_width(20)
+        self.window.set_size_request(300,100)
+        self.mensaje=gtk.Label("ha ganado. Gracias por jugar") #Terminar esta parte
+        WinTab=gtk.Table(1,1)
+        WinTab.attach(self.mensaje,0,1,0,1)
+        self.mensaje.show()
+        WinTab.show()
+        self.window.add(WinTab)
+        self.window.show()
+    def delete_event(self,widget,event,data=None):
+        gtk.main_quit()
+        return False
+    def destroy(self, widget, data=None):
+        gtk.main_quit()
 class Ventana_Perdido:
     def __init__(self):
         self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)

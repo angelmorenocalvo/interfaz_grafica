@@ -113,6 +113,8 @@ class Tablero:
                 if self.tabla[i][j].bombas_alrededor == 0:
                     self.abrir_alrededor(i,j)
                 self.tabla[i][j].abrir()
+            if self.todo_abierto(): Ventana_Ganado()
+            
                 
         if event.button == 3:
             self.tabla[i][j].marcada = not self.tabla[i][j].marcada
@@ -175,10 +177,14 @@ class Tablero:
         contador = self.cant_bombas
         for i in range(self.filas):
             for j in range(self.columnas):
-                #return ( False) if (self.tabla[i][j].detras and not self.tabla[i][j].marcada) else ( True)
+                
                 if (self.tabla[i][j].detras and not self.tabla[i][j].marcada):
-                    contador-=0
-                if contador != 0:
+                    return False
+        return True
+    def todo_abierto(self):
+        for i in range(self.filas):
+            for j in range(self.columnas):
+                if (self.tabla[i][j].cerrada and not self.tabla[i][j].detras):
                     return False
         return True
 class Buscaminas:
@@ -261,7 +267,7 @@ class Menu:
         self.button.show()
         
         self.button=gtk.Button("Leer de fichero")
-        #self.button.connect("clicked",self.delete_event) #implementar mas adelante
+        self.button.connect("clicked",self.elegirFichero) #implementar mas adelante
         tabla.attach(self.button,0,1,4,5)
         self.button.show()
         
@@ -273,6 +279,7 @@ class Menu:
         self.window.add(tabla)
         self.window.show()
         tabla.show()
+
     def delete_event(self,widget,event,data=None):
         gtk.main_quit()
         return False
@@ -281,6 +288,15 @@ class Menu:
         self.window.hide()
         Buscaminas(widget,filas,columnas,bombas)
 
+    def elegirFichero(self,widget = None):
+        dlg = gtk.FileChooserDialog("Abrir fichero", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+
+        if dlg.run() == gtk.RESPONSE_OK:
+            res = dlg.get_filename()
+        else:
+            res = None
+        dlg.destroy()
+        return res
     def destroy(self, widget, data=None):
         gtk.main_quit()
     

@@ -1,8 +1,8 @@
 #cosas que corregir
-    '''
-    recurisividad cuando abrimos una bomba, aunque en ese caso de igual porque mostramos tablero final
-    recursividad cuando hay celda marcada cerca que da error
-    '''
+    
+    #recurisividad cuando abrimos una bomba, aunque en ese caso de igual porque mostramos tablero final
+    #recursividad cuando hay celda marcada cerca que da error
+    
 #*****IMPORTACIONES NECESARIAS*******
 
 import pygtk
@@ -28,6 +28,7 @@ class Celda:
             print 'Accion no valida'
             
         elif self.cerrada == True:
+            
             if self.detras == True:
                 self.boton.get_image().set_from_pixbuf(self.imagenes[12])
                 Ventana_Perdido()
@@ -38,8 +39,14 @@ class Celda:
                 self.cerrada = False
 
     def actualizar(self,widget=None):
-        if not self.cerrada:
-            self.boton.get_image().set_from_pixbuf(self.imagenes[self.bombas_alrededor])
+        #print "minas alrededor actualizadas" + " " + self.bombas_alrededor
+        print 'prueba'
+        print self.bombas_alrededor
+        if  not self.cerrada:
+            if self.bombas_alrededor<0:
+                self.boton.get_image().set_from_pixbuf(self.imagenes[10])
+            else:
+                self.boton.get_image().set_from_pixbuf(self.imagenes[self.bombas_alrededor])
         else:
             if self.marcada:
                 self.boton.get_image().set_from_pixbuf(self.imagenes[8])
@@ -67,7 +74,7 @@ class Tablero:
         
         return lista
     def crear_boton(self):
-        boton=gtk.Button(None)
+        boton=gtk.Button()
         boton.set_image(gtk.Image())
         boton.set_relief(gtk.RELIEF_NONE)
         boton.get_image().set_from_pixbuf(self.imagenes[7])
@@ -95,7 +102,9 @@ class Tablero:
                     
                 if self.tabla[fila + rango[a][0]][columna + rango[a][1]].marcada == True:
                     contador-=1
+        
         self.tabla[fila][columna].bombas_alrededor = contador
+        
     def movimiento(self,widget,event, boton):
         i,j = self.posicion_boton(boton)
         if event.button == 1:
@@ -105,6 +114,7 @@ class Tablero:
                 self.tabla[i][j].abrir()
         if event.button == 3:
             self.tabla[i][j].marcada = not self.tabla[i][j].marcada
+            self.comprobar_alrededor(i,j)
             self.tabla[i][j].actualizar()
 
         
@@ -136,7 +146,7 @@ class Tablero:
         return (fila<0 or fila > self.filas-1) or (columna < 0 or columna > self.columnas-1) 
     def abrir_alrededor(self,fila,columna):
         self.tabla[fila][columna].abrir()
-        if self.tabla[fila][columna].bombas_alrededor == 0: #or self.tabla[fila][columna].delante == '?':
+        if self.tabla[fila][columna].bombas_alrededor == 0 and not self.tabla[fila][columna].detras: #or self.tabla[fila][columna].delante == '?':
             if fila%2 == 0:
                 rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
             else:
@@ -154,7 +164,7 @@ class Tablero:
         for a in range(len(rango)):#len(rango)
             if not self.fuera_limites(fila + rango[a][0],columna + rango[a][1]):
                 if self.tabla[fila + rango[a][0]][columna + rango[a][1]].detras != True:
-                    self.tabla[fila + rango[a][0]][columna + rango[a][1]].bombas_alrededor = self.bombas_alrededor(fila + rango[a][0],columna + rango[a][1])
+                    self.bombas_alrededor(fila + rango[a][0],columna + rango[a][1])
                 if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == False:
                     self.tabla[fila + rango[a][0]][columna + rango[a][1]].actualizar()
 class Buscaminas:

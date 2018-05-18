@@ -3,6 +3,7 @@
     #recurisividad cuando abrimos una bomba, aunque en ese caso de igual porque mostramos tablero final
     #recursividad cuando hay celda marcada cerca que da error
     #no poder marcar una celda abierta
+    #hacer error de si no existe el fichero volver para atras y pedir otro
 #*****IMPORTACIONES NECESARIAS*******
 
 import pygtk
@@ -25,7 +26,7 @@ class Celda:
         #abrir
         
         if self.marcada == True:
-            print 'Accion no valida'
+            pass
             
         elif self.cerrada == True:
             
@@ -188,9 +189,9 @@ class Tablero:
                     return False
         return True
 class Buscaminas:
-    def __init__(self,widget,filas,columnas,bombas):
+    def __init__(self,widget,filas,columnas,bombas,fichero=None):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.tabla = Tablero(filas,columnas,bombas)
+        self.tabla = Tablero(filas,columnas,bombas) if fichero == None else self.abrir_fichero(fichero)
         self.ventana_buscaminas(filas,columnas)
 
 
@@ -227,6 +228,35 @@ class Buscaminas:
                     self.fixed.put(self.tabla.tabla[j][i].boton, i*19+9, j*19)
         self.window.show()
 
+
+    def abrir_fichero(nfichero):
+        t = Tablero(0,0,0)
+        columnas = filas = 0
+        print nfichero
+        f = open(nfichero)
+        linea = list(f.readline())
+        while linea[0]!= ' ':
+            columnas = int(str(columnas)+str(linea[0]))
+            linea.pop(0)
+        linea.remove(' ')
+        linea.remove('\n')
+        for i in range(len(linea)):
+            filas = int(str(filas)+linea[i])
+        t.tabla = [[ Celda() for i in range (columnas)]for j in range (filas)]
+        x = 0
+        for i in range(filas):
+            linea = f.readline()
+            for j in range(columnas):
+                if linea[j] == '*':
+                    t.tabla[i][j].detras = True
+                    x += 1
+                else:
+                    t.tabla[i][j].detras = False
+        t.cant_bombas = x
+        f.close()
+        return t
+    
+    
     def delete_event(self,widget,event,data=None):
         self.window.hide()
         #gtk.main_quit()
@@ -267,7 +297,7 @@ class Menu:
         self.button.show()
         
         self.button=gtk.Button("Leer de fichero")
-        self.button.connect("clicked",self.elegirFichero) #implementar mas adelante
+        self.button.connect("clicked",self.ficheros) #implementar mas adelante
         tabla.attach(self.button,0,1,4,5)
         self.button.show()
         
@@ -284,22 +314,29 @@ class Menu:
         gtk.main_quit()
         return False
     
-    def crear_buscaminas(self,widget,filas,columnas,bombas):
+    def crear_buscaminas(self,widget,filas,columnas,bombas,fichero=None):
         self.window.hide()
-        Buscaminas(widget,filas,columnas,bombas)
-
-    def elegirFichero(self,widget = None):
-        dlg = gtk.FileChooserDialog("Abrir fichero", None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-
-        if dlg.run() == gtk.RESPONSE_OK:
-            res = dlg.get_filename()
-        else:
-            res = None
-        dlg.destroy()
-        return res
+        Buscaminas(widget,filas,columnas,bombas,fichero=None)
+    def ficheros(self,widget):
+        
+        nombre = self.elegir_Fichero()
+        
+        self.crear_buscaminas(0,0,0,nombre)
     def destroy(self, widget, data=None):
         gtk.main_quit()
     
+    
+    def elegir_Fichero(self):
+        dlg = gtk.FileChooserDialog("Abrir fichero", None,gtk.FILE_CHOOSER_ACTION_OPEN,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+
+        if dlg.run() == gtk.RESPONSE_OK:
+            nombre = dlg.get_filename()
+        else:
+            nombre = None
+        print nombre
+        dlg.destroy()
+        
+        return nombre
 class Ventana_Ganado:
     def __init__(self):
         self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)

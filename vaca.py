@@ -4,6 +4,12 @@
     #recursividad cuando hay celda marcada cerca que da error
     #no poder marcar una celda abierta
     #hacer error de si no existe el fichero volver para atras y pedir otro
+    #actualizar label
+    #ventanas de ganado y perdido o hacerlo con el fixed
+    #volver a crear un tablero con el boton o retornar al mismo si es desde un fichero
+    #cambiar fotos
+    #pasarlo todo a event box
+    #
 #*****IMPORTACIONES NECESARIAS*******
 
 import pygtk
@@ -223,7 +229,7 @@ class Buscaminas:
         button.show()
         
         button=gtk.Button("Leer de fichero")
-        #button.connect("clicked",self.ficheros) #implementar mas adelante
+        button.connect("clicked",self.elegir_Fichero) #implementar mas adelante
         tabla.attach(button,0,1,4,5)
         button.show()
         
@@ -240,7 +246,10 @@ class Buscaminas:
 
     def rellenar_ventana(self,widget,filas,columnas,bombas,fichero=None):
         self.menu.hide()
-        self.tabla = Tablero(filas,columnas,bombas) if fichero == None else self.abrir_fichero(fichero)
+        if fichero == None:
+            self.tabla = Tablero(filas,columnas,bombas) if fichero == None else self.abrir_fichero(fichero)
+        else:
+            self.tabla = self.abrir_fichero(fichero)
         ancho = self.tabla.columnas*24
         alto = self.tabla.filas*24
         
@@ -271,25 +280,52 @@ class Buscaminas:
                     fixed.put(self.tabla.tabla[j][i].boton, i*19+9, j*19)
         
         Frase_errores=gtk.Label(self.label)
-        fixed.put(Frase_errores,self.tabla.columnas+40,self.tabla.filas*19+90)
+        Frase_errores.show()
+        fixed.put(Frase_errores,self.tabla.columnas,self.tabla.filas*19+30)
         
         button=gtk.Button("Salir")
         button.connect("clicked",self.cerrar_ventjuego)
-        fixed.put(button,self.tabla.columnas+10,self.tabla.filas*19+30)
+        fixed.put(button,self.tabla.columnas,self.tabla.filas*19+50)
         button.show()
         button=gtk.Button("Actualizar")
         button.connect("clicked",self.reiniciar_tablero)
-        fixed.put(button,self.tabla.columnas+10,self.tabla.filas*19+60)
+        fixed.put(button,self.tabla.columnas+60,self.tabla.filas*19+50)
         button.show()
         self.ventana_juego.show()
+    
+    def abrir_fichero(self,nfichero):
+        t = Tablero(0,0,0)
+        columnas = filas = 0
+        print nfichero
+        f = open(nfichero)
+        linea = list(f.readline())
+        while linea[0]!= ' ':
+            columnas = int(str(columnas)+str(linea[0]))
+            linea.pop(0)
+        linea.remove(' ')
+        linea.remove('\n')
+        for i in range(len(linea)):
+            filas = int(str(filas)+linea[i])
+        t.tabla = [[ Celda(t.crear_boton(),t.imagenes) for i in range (columnas)]for j in range (filas)]
+        x = 0
+        for i in range(filas):
+            linea = f.readline()
+            for j in range(columnas):
+                if linea[j] == '*':
+                    t.tabla[i][j].detras = True
+                    x += 1
+                else:
+                    t.tabla[i][j].detras = False
+        t.cant_bombas = x
+        f.close()
+        return t
+
     def fin_juego(self):
         pass
     def reiniciar_tablero(self,widget):
         pass
     #eventos salida programa
     def delete_event(self,widget,event,data=None):
-        print widget
-        print data
         gtk.main_quit()
         return False
     def destroy(self, widget, data=None):
@@ -297,7 +333,18 @@ class Buscaminas:
     def cerrar_ventjuego(self,widget,data = None):
         self.ventana_juego.hide()
         self.menu.show()
+    def elegir_Fichero(self,widget=None):
+        dlg = gtk.FileChooserDialog("Abrir fichero",self.menu,gtk.FILE_CHOOSER_ACTION_OPEN,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 
+        if dlg.run() == gtk.RESPONSE_OK:
+            nombre = dlg.get_filename()
+        else:
+            nombre = None
+        print nombre
+        
+        dlg.destroy()
+        self.rellenar_ventana(None,0,0,0,nombre)
+        
 
 def main():
     gtk.main()

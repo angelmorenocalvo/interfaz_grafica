@@ -187,232 +187,123 @@ class Tablero:
                 if (self.tabla[i][j].cerrada and not self.tabla[i][j].detras):
                     return False
         return True
+
 class Buscaminas:
-    def __init__(self,widget,filas,columnas,bombas,fichero=None):
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.tabla = Tablero(filas,columnas,bombas) if fichero == None else self.abrir_fichero(fichero)
-        self.ventana_buscaminas(filas,columnas)
-
-
-    def ventana_buscaminas(self,filas,columnas):
-        ancho = self.tabla.columnas*24
-        alto = self.tabla.filas*24
-        self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("Buscaminas")
-        self.window.set_border_width(20)
-        self.window.set_size_request(ancho,alto)
-        self.window.connect("delete_event",self.delete_event)
-        self.window.connect("destroy", self.destroy)
-        self.tabla.rellenar_bombas()
-
-        
-        for i in range(self.tabla.filas):
-            
-            for j in range(self.tabla.columnas):
-            
-                self.tabla.bombas_alrededor(i,j)
-        
-         # Create a Fixed Container
-        self.fixed = gtk.Fixed()
-        self.window.add(self.fixed)
-        self.fixed.show()
-
-        for i in range(self.tabla.columnas):
-            for j in range(self.tabla.filas):
-                if j%2==True:
-                    self.fixed.put(self.tabla.tabla[j][i].boton, i*19, j*19)                    
-                else:
-                    self.fixed.put(self.tabla.tabla[j][i].boton, i*19+9, j*19)
-        self.window.show()
-
-
-    def abrir_fichero(nfichero):
-        t = Tablero(0,0,0)
-        columnas = filas = 0
-        print nfichero
-        f = open(nfichero)
-        linea = list(f.readline())
-        while linea[0]!= ' ':
-            columnas = int(str(columnas)+str(linea[0]))
-            linea.pop(0)
-        linea.remove(' ')
-        linea.remove('\n')
-        for i in range(len(linea)):
-            filas = int(str(filas)+linea[i])
-        t.tabla = [[ Celda() for i in range (columnas)]for j in range (filas)]
-        x = 0
-        for i in range(filas):
-            linea = f.readline()
-            for j in range(columnas):
-                if linea[j] == '*':
-                    t.tabla[i][j].detras = True
-                    x += 1
-                else:
-                    t.tabla[i][j].detras = False
-        t.cant_bombas = x
-        f.close()
-        return t
-    
-    
-    def delete_event(self,widget,event,data=None):
-        self.window.hide()
-        #gtk.main_quit()
-        juego = Menu()
-        juego.crear_menu()
-        return False
-    def destroy(self, widget, data=None):
-        self.window.hide()
-class Menu:
     def __init__(self):
-         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-         #self.ventana_juego = Buscaminas()
-    
-    def crear_menu(self):
-        self.window.set_title("Menu principal")
-        self.window.set_border_width(10)
-        self.window.set_size_request(200,275)
-        self.window.connect("delete_event",self.delete_event)   #Cierra el programa si se pulsa la cruz del marco
-        self.window.connect("destroy", self.destroy)
+        self.menu = self.menu()
+        self.ventana_juego = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.fin = self.fin_juego()
+        self.tabla = None
+        self.label = "Mensaje prueba"
+    def menu(self):
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_title("Menu principal")
+        window.set_border_width(10)
+        window.set_size_request(200,275)
+        window.connect("delete_event",self.delete_event)   #Cierra el programa si se pulsa la cruz del marco
+        window.connect("destroy", self.destroy)
         tabla=gtk.Table()
         dificultad=gtk.Label("BUSCAMINAS")
         tabla.attach(dificultad,0,3,0,1)
         dificultad.show()
         
-        self.button=gtk.Button("Principiante (9x9, 10 minas)")
-        self.button.connect("clicked",self.crear_buscaminas,9,9,10)
-        tabla.attach(self.button,0,1,1,2)
-        self.button.show()
+        button=gtk.Button("Principiante (9x9, 10 minas)")
+        button.connect("clicked",self.rellenar_ventana,9,9,10)
+        tabla.attach(button,0,1,1,2)
+        button.show()
         
-        self.button=gtk.Button("Intermedio (16x16, 40 minas)")
-        self.button.connect("clicked",self.crear_buscaminas,16,16,40)
-        tabla.attach(self.button,0,1,2,3)
-        self.button.show()
+        button=gtk.Button("Intermedio (16x16, 40 minas)")
+        button.connect("clicked",self.rellenar_ventana,16,16,40)
+        tabla.attach(button,0,1,2,3)
+        button.show()
         
-        self.button=gtk.Button("Experto (16x30, 99 minas)")
-        self.button.connect("clicked",self.crear_buscaminas,16,30,99)
-        tabla.attach(self.button,0,1,3,4)
-        self.button.show()
+        button=gtk.Button("Experto (16x30, 99 minas)")
+        button.connect("clicked",self.rellenar_ventana,16,30,99)
+        tabla.attach(button,0,1,3,4)
+        button.show()
         
-        self.button=gtk.Button("Leer de fichero")
-        self.button.connect("clicked",self.ficheros) #implementar mas adelante
-        tabla.attach(self.button,0,1,4,5)
-        self.button.show()
+        button=gtk.Button("Leer de fichero")
+        #button.connect("clicked",self.ficheros) #implementar mas adelante
+        tabla.attach(button,0,1,4,5)
+        button.show()
         
-        self.button=gtk.Button("Salir")
-        self.button.connect("clicked",self.delete_event, None)
-        self.button.connect_object("clicked",gtk.Widget.destroy, self.window)
-        tabla.attach(self.button,0,1,5,6)
-        self.button.show()
-        self.window.add(tabla)
-        self.window.show()
+        button=gtk.Button("Salir")
+        button.connect("clicked",self.delete_event, None)
+        button.connect_object("clicked",gtk.Widget.destroy, window)
+        tabla.attach(button,0,1,5,6)
+        button.show()
+        window.add(tabla)
+        window.show()
         tabla.show()
 
-    def delete_event(self,widget,event,data=None):
-        gtk.main_quit()
-        return False
-    
-    def crear_buscaminas(self,widget,filas,columnas,bombas,fichero=None):
-        self.window.hide()
-        Buscaminas(widget,filas,columnas,bombas,fichero=None)
-    def ficheros(self,widget):
-        
-        nombre = self.elegir_Fichero()
-        
-        self.crear_buscaminas(0,0,0,nombre)
-    def destroy(self, widget, data=None):
-        gtk.main_quit()
-    
-    
-    def elegir_Fichero(self):
-        dlg = gtk.FileChooserDialog("Abrir fichero",self.window,gtk.FILE_CHOOSER_ACTION_OPEN,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        return window
 
-        if dlg.run() == gtk.RESPONSE_OK:
-            nombre = dlg.get_filename()
-        else:
-            nombre = None
-        print nombre
-        dlg.destroy()
+    def rellenar_ventana(self,widget,filas,columnas,bombas,fichero=None):
+        self.menu.hide()
+        self.tabla = Tablero(filas,columnas,bombas) if fichero == None else self.abrir_fichero(fichero)
+        ancho = self.tabla.columnas*24
+        alto = self.tabla.filas*24
         
-        return nombre
-class Ventana_Ganado:
-    def __init__(self):
-        self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.sacar_pantalla()
-    def sacar_pantalla(self):
-        self.window.set_title("WIN")
-        self.window.set_border_width(20)
-        self.window.set_size_request(300,100)
-        self.mensaje=gtk.Label("ha ganado. Gracias por jugar") #Terminar esta parte
-        WinTab=gtk.Table(1,1)
-        WinTab.attach(self.mensaje,0,1,0,1)
-        self.mensaje.show()
-        WinTab.show()
-        self.window.add(WinTab)
-        self.window.show()
-    def delete_event(self,widget,event,data=None):
-        gtk.main_quit()
-        return False
-    def destroy(self, widget, data=None):
-        gtk.main_quit()
-class Ventana_Perdido:
-    def __init__(self):
-        self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.sacar_pantalla()
-    def sacar_pantalla(self):
-        self.window.set_title("Fin del juego")
-        self.window.set_border_width(20)
-        self.window.set_size_request(300,100)
-        #self.window.connect("delete_event",self.delete_event)   #Cierra el programa si se pulsa la cruz del marco
-        #self.window.connect("destroy", self.destroy)
-        self.Final=gtk.Label("Fin del juego. Gracias por jugar") #Terminar esta parte
-        FinalTab=gtk.Table(1,1)
-        FinalTab.attach(self.Final,0,1,0,1)
-        self.Final.show()
-        FinalTab.show()
-        self.window.add(FinalTab)
-        self.window.show()
-    def delete_event(self,widget,event,data=None):
-        gtk.main_quit()
-        return False
-    def destroy(self, widget, data=None):
-        gtk.main_quit()
+        self.ventana_juego.set_title("Buscaminas")
+        self.ventana_juego.set_border_width(20)
+        self.ventana_juego.set_size_request(ancho,alto)
+        self.ventana_juego.connect("delete_event",self.cerrar_ventjuego)
+        #self.ventana_juego.connect("destroy",)
+
+        self.tabla.rellenar_bombas()
 
         
+        #rellenar por primera vez las minas de alrededor
+        for i in range(self.tabla.filas):
+            for j in range(self.tabla.columnas):
+                self.tabla.bombas_alrededor(i,j)
+
+         # Create a Fixed Container
+        fixed = gtk.Fixed()
+        self.ventana_juego.add(fixed)
+        fixed.show()
+
+        for i in range(self.tabla.columnas):
+            for j in range(self.tabla.filas):
+                if j%2==True:
+                    fixed.put(self.tabla.tabla[j][i].boton, i*19, j*19)                    
+                else:
+                    fixed.put(self.tabla.tabla[j][i].boton, i*19+9, j*19)
         
-    #*********EVENTOS*********
-    '''
+        Frase_errores=gtk.Label(self.label)
+        fixed.put(Frase_errores,self.tabla.columnas+40,self.tabla.filas*19+90)
+        
+        button=gtk.Button("Salir")
+        button.connect("clicked",self.cerrar_ventjuego)
+        fixed.put(button,self.tabla.columnas+10,self.tabla.filas*19+30)
+        button.show()
+        button=gtk.Button("Actualizar")
+        button.connect("clicked",self.reiniciar_tablero)
+        fixed.put(button,self.tabla.columnas+10,self.tabla.filas*19+60)
+        button.show()
+        self.ventana_juego.show()
+    def fin_juego(self):
+        pass
+    def reiniciar_tablero(self,widget):
+        pass
+    #eventos salida programa
     def delete_event(self,widget,event,data=None):
+        print widget
+        print data
         gtk.main_quit()
         return False
     def destroy(self, widget, data=None):
         gtk.main_quit()
-    '''
-#********PROGRAMA PRINCIPAL*********
+    def cerrar_ventjuego(self,widget,data = None):
+        self.ventana_juego.hide()
+        self.menu.show()
+
 
 def main():
     gtk.main()
     return 0
 
 if __name__=="__main__":
-    jugar = Menu()
-    jugar.crear_menu()
+    jugar = Buscaminas()
+    jugar.menu.show()
     main()
-
-
-
-'''
- self.window.set_title("Menu principal")
-        self.window.set_border_width(10)
-        self.window.set_size_request(200,275)
-        self.window.connect("delete_event",self.delete_event)   #Cierra el programa si se pulsa la cruz del marco
-        self.window.connect("destroy", self.destroy)
-        lista_dificultades=[[9,9,10],[],[]]
-        lista_botones=[]
-        tabla=gtk.Table()
-        for i in range(5):
-            self.button=gtk.Button("Principiante (9x9, 10 minas)")
-            lista_botones.add(botton)
-            self.button.connect("clicked",self.crear_buscaminas,lista_dificultades.index(button))
-            tabla.attach(self.button,0,1,i+1,i+2)
-            self.button.show()
-'''

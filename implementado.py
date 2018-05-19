@@ -32,8 +32,11 @@ class Celda:
                 self.boton.get_image().set_from_pixbuf(self.imagenes[self.bombas_alrededor])
                 self.cerrada = False
 
-    
-    
+    def actualizar(self,widget=None):
+        if sef-cerrada:
+            self.boton.get_image().set_from_pixbuf(self.imagenes[self.bombas_alrededor])
+        elif self.marcada:
+            self.boton.get_image().set_from_pixbuf(self.imagenes[8])
 #************Tablero utilizado por detras***************
 class Tablero:
     def __init__(self,filas,columnas,bombas,widget = None):
@@ -63,6 +66,26 @@ class Tablero:
         boton.connect('clicked', self.movimiento,boton)
         boton.show()
         return boton
+
+    def bombas_alrededor(self, fila, columna):
+
+        contador = 0
+        if fila%2 == 0:
+            rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
+            
+        else:
+            rango = [(-1, -1),(-1, 0),(0, -1),(0, 1),(1, -1),(1, 0)]#par
+            
+            
+        for a in range(len(rango)):#len(rango)
+            if not self.fuera_limites(fila + rango[a][0], columna + rango[a][1]):
+                
+                if self.tabla[fila + rango[a][0]][columna + rango[a][1]].detras == True:
+                    contador+=1
+                    
+                if self.tabla[fila + rango[a][0]][columna + rango[a][1]].marcada == True:
+                    contador-=1
+        self.tabla[fila][columna].bombas_alrededor = contador
     def movimiento(self,widget, boton):
         i,j = self.posicion_boton(boton)
         if self.tabla[i][j].marcada == False:
@@ -109,27 +132,18 @@ class Tablero:
                 if not self.fuera_limites(fila + rango[a][0],columna + rango[a][1]):
                     if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == False :
                         self.abrir_alrededor(fila + rango[a][0],columna + rango[a][1])
-
-    def bombas_alrededor(self, fila, columna):
-        
-        contador = 0
+    def comprobar_alrededor(self,fila,columna):
         if fila%2 == 0:
             rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
-            
-        else:
-            rango = [(-1, -1),(-1, 0),(0, -1),(0, 1),(1, -1),(1, 0)]#par
-            
-            
+            else:
+            rango = [(-1, -1),(-1, 0),(0, -1),(0, 1),(1, -1),(1, 0)]#par        
         for a in range(len(rango)):#len(rango)
-            if not self.fuera_limites(fila + rango[a][0], columna + rango[a][1]):
-                
-                if self.tabla[fila + rango[a][0]][columna + rango[a][1]].detras == True:
-                    contador+=1
+            if not self.fuera_limites(fila + rango[a][0],columna + rango[a][1]):
+                if self.tabla[fila + rango[a][0]][columna + rango[a][1]].detras != True:
+                    self.tabla[fila + rango[a][0]][columna + rango[a][1]].bombas_alrededor = self.bombas_alrededor(fila + rango[a][0],columna + rango[a][1])
+                if self.tabla[fila + rango[a][0]][columna + rango[a][1]].cerrada == False  and self.tabla[fila + rango[a][0]][columna + rango[a][1]].marcada == True:
                     
-                if self.tabla[fila + rango[a][0]][columna + rango[a][1]].marcada == True:
-                    contador-=1
-        self.tabla[fila][columna].bombas_alrededor = contador
-    
+
 
 
         

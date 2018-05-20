@@ -239,6 +239,24 @@ class Tablero:
         if self.timer != None:
             gobject.source_remove(self.timer)
             self.timer = None
+    def ntablero(self,widget,fichero):
+        if fichero:
+            for i in range(self.filas):
+                for j in range(self.columnas):
+                    self.tabla[i][j].marcada = False
+                    self.tabla[i][j].cerrada = True
+                    self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[7])
+        else:
+             for i in range(self.filas):
+                for j in range(self.columnas):
+                    self.tabla[i][j].marcada = False
+                    self.tabla[i][j].cerrada = True
+                    self.tabla[i][j].detras = False
+                    self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[7])
+             self.rellenar_bombas()
+             for i in range(self.filas):
+                for j in range(self.columnas):
+                    self.bombas_alrededor(i,j)
 class Buscaminas:
     def __init__(self):
         self.menu = self.menu()
@@ -296,8 +314,10 @@ class Buscaminas:
         self.menu.hide()
         if fichero == None:
             self.tabla = Tablero(filas,columnas,bombas,self.Frase) if fichero == None else self.abrir_fichero(fichero)
+            a = False
         else:
             self.tabla = self.abrir_fichero(fichero)
+            a = True
         #tiempo
         self.tabla.tpo0 = time.time()
         self.tabla.timer = gobject.timeout_add(1000, self.tabla.click)
@@ -339,7 +359,7 @@ class Buscaminas:
         fixed.put(button,self.tabla.columnas,self.tabla.filas*19+40)
         button.show()
         button=gtk.Button("Actualizar")
-        button.connect("clicked",self.reiniciar_tablero)
+        button.connect("clicked",self.tabla.ntablero,a)
         fixed.put(button,self.tabla.columnas+60,self.tabla.filas*19+40)
         button.show()
         self.tabla.etq_tpo.show()

@@ -2,7 +2,7 @@
     #si la primera es bomba cambiarla por otra que no lo sea
     #volver a crear un tablero con el boton o retornar al mismo si es desde un fichero
     #pasarlo todo a event box
-    #tiempo
+
 
 #*****IMPORTACIONES NECESARIAS*******
 
@@ -11,7 +11,8 @@ pygtk.require('2.0')
 import gtk
 import random
 #from random import randint
-from time import time
+import time
+import gobject
 class Celda:
     def __init__(self,boton,imagenes,bomba= None):
         self.imagenes = imagenes
@@ -62,7 +63,9 @@ class Tablero:
         self.filas = filas
         self.columnas = columnas
         self.frase = frase
-        
+        self.tpo0 = 0
+        self.timer = 0
+        self.etq_tpo = gtk.Label(' ')
     def imagenes_importadas(self):
         lista = []
         fotos= ["xcelda_cerrada.png","xcelda_marcada.png","xcelda_marcada_error.png","xcelda_question.png","xcelda_mina.png","xcelda_boom.png"]
@@ -74,7 +77,10 @@ class Tablero:
             lista.append(gtk.gdk.pixbuf_new_from_file(fotos[i]))
         
         return lista
-    
+    def click(self):
+        dt = int(time.time() - self.tpo0)
+        self.etq_tpo.set_label("{0:02}:{1:02}".format(dt/60,dt%60))
+        return dt
     def crear_boton(self):
         boton=gtk.Button()
         boton.set_image(gtk.Image())
@@ -229,6 +235,10 @@ class Tablero:
                     self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[11])
                 else:
                     self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[0])
+
+        if self.timer != None:
+            gobject.source_remove(self.timer)
+            self.timer = None
 class Buscaminas:
     def __init__(self):
         self.menu = self.menu()
@@ -236,6 +246,7 @@ class Buscaminas:
         self.fin = self.fin_juego()
         self.tabla = None
         self.Frase=gtk.Label(' ')
+        
     def menu(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("Menu principal")
@@ -280,12 +291,16 @@ class Buscaminas:
         return window
 
     def rellenar_ventana(self,widget,filas,columnas,bombas,fichero=None):
+
         self.Frase.set_text(' ')
         self.menu.hide()
         if fichero == None:
             self.tabla = Tablero(filas,columnas,bombas,self.Frase) if fichero == None else self.abrir_fichero(fichero)
         else:
             self.tabla = self.abrir_fichero(fichero)
+        #tiempo
+        self.tabla.tpo0 = time.time()
+        self.tabla.timer = gobject.timeout_add(1000, self.tabla.click)
         ancho = self.tabla.columnas*24
         alto = self.tabla.filas*24
         
@@ -321,13 +336,16 @@ class Buscaminas:
         
         button=gtk.Button("Salir")
         button.connect("clicked",self.cerrar_ventjuego)
-        fixed.put(button,self.tabla.columnas,self.tabla.filas*19+50)
+        fixed.put(button,self.tabla.columnas,self.tabla.filas*19+40)
         button.show()
         button=gtk.Button("Actualizar")
         button.connect("clicked",self.reiniciar_tablero)
-        fixed.put(button,self.tabla.columnas+60,self.tabla.filas*19+50)
+        fixed.put(button,self.tabla.columnas+60,self.tabla.filas*19+40)
         button.show()
+        self.tabla.etq_tpo.show()
+        fixed.put(self.tabla.etq_tpo,self.tabla.columnas+150,self.tabla.filas*19+45)
         self.ventana_juego.show()
+        
     
     def abrir_fichero (self,nomfich):
         fich = open(nomfich)

@@ -1,15 +1,9 @@
 #cosas que corregir
-    
-    #recurisividad cuando abrimos una bomba, aunque en ese caso de igual porque mostramos tablero final
-    #recursividad cuando hay celda marcada cerca que da error
-    #no poder marcar una celda abierta
-    #hacer error de si no existe el fichero volver para atras y pedir otro
-    #actualizar label
-    #ventanas de ganado y perdido o hacerlo con el fixed
+    #si la primera es bomba cambiarla por otra que no lo sea
     #volver a crear un tablero con el boton o retornar al mismo si es desde un fichero
-    #cambiar fotos
     #pasarlo todo a event box
-    #
+    #tiempo
+
 #*****IMPORTACIONES NECESARIAS*******
 
 import pygtk
@@ -38,7 +32,7 @@ class Celda:
             
             if self.detras == True:
                 self.boton.get_image().set_from_pixbuf(self.imagenes[12])
-                Ventana_Perdido()
+                #Ventana_Perdido()
                 self.cerrada = False
                 #sacar ventana de has perdido
             else:
@@ -47,8 +41,7 @@ class Celda:
 
     def actualizar(self,widget=None):
         #print "minas alrededor actualizadas" + " " + self.bombas_alrededor
-        print 'prueba'
-        print self.bombas_alrededor
+
         if  not self.cerrada:
             if self.bombas_alrededor<0:
                 self.boton.get_image().set_from_pixbuf(self.imagenes[10])
@@ -61,13 +54,14 @@ class Celda:
                 self.boton.get_image().set_from_pixbuf(self.imagenes[7])
 #************Tablero utilizado por detras***************
 class Tablero:
-    def __init__(self,filas,columnas,bombas,widget = None):
+    def __init__(self,filas,columnas,bombas,frase, widget = None):
         self.imagenes = self.imagenes_importadas()
         self.tabla = [[ Celda(self.crear_boton(),self.imagenes) for i in range (columnas)]for j in range (filas)]
         self.cant_bombas = bombas
         self.bombas_restantes = bombas
         self.filas = filas
         self.columnas = columnas
+        self.frase = frase
         
     def imagenes_importadas(self):
         lista = []
@@ -115,18 +109,33 @@ class Tablero:
         
     def movimiento(self,widget,event, boton):
         i,j = self.posicion_boton(boton)
-        if event.button == 1 and not self.tabla[i][j].marcada:    
-            if self.tabla[i][j].bombas_alrededor == 0:
-                self.abrir_alrededor(i,j)
-            self.tabla[i][j].abrir()
-        if self.todo_abierto(): Ventana_Ganado()
-            
+        if event.button == 1:    
+            self.frase.set_text(' ')
+            if self.tabla[i][j].marcada:
+                self.frase.set_text('no se puede abrir una celda marcada')
+            else:
+                if self.tabla[i][j].bombas_alrededor == 0:
+                    self.abrir_alrededor(i,j)
+                self.tabla[i][j].abrir()
+                if self.comprobar_final():
                 
-        if event.button == 3 and self.tabla[i][j].cerrada:
-            self.tabla[i][j].marcada = not self.tabla[i][j].marcada
-            if self.todo_marcado(): Ventana_Ganado()
-            self.comprobar_alrededor(i,j)
-            self.tabla[i][j].actualizar()
+                    self.tablero_final()
+                    pass
+        
+
+        if event.button == 3:
+            self.frase.set_text(' ')
+            if not self.tabla[i][j].cerrada:
+                self.frase.set_text('esa celda no se puede marcar, esta ya abierta')
+            else:
+                self.tabla[i][j].marcada = not self.tabla[i][j].marcada
+                if self.comprobar_final():
+                
+                    self.tablero_final()
+                    pass
+                self.comprobar_alrededor(i,j)
+                self.tabla[i][j].actualizar()
+        
             
     def posicion_boton(self,boton):
         a=0
@@ -156,6 +165,8 @@ class Tablero:
     
     def abrir_alrededor(self,fila,columna):
         self.tabla[fila][columna].abrir()
+        if self.comprobar_final():
+                    self.tablero_final()
         if self.tabla[fila][columna].bombas_alrededor == 0 and not self.tabla[fila][columna].detras: #or self.tabla[fila][columna].delante == '?':
             if fila%2 == 0:
                 rango = [(-1, 1),(-1, 0),(0, -1),(0, 1),(1, 1),(1, 0)]#impar
@@ -193,14 +204,38 @@ class Tablero:
                 if (self.tabla[i][j].cerrada and not self.tabla[i][j].detras):
                     return False
         return True
-
+    def comprobar_final(self):
+        #cambiar label
+        if self.todo_abierto():
+            self.frase.set_text('todas las casillas abiertas, ha ganado')
+            return True
+        if self.todo_marcado():
+            self.frase.set_text('todas las casillas con bomba marcadas,ha ganado, ha ganado')
+            return True
+        for i in range(self.filas):
+            for j in range(self.columnas):
+                if (not self.tabla[i][j].cerrada) and self.tabla[i][j].detras:
+                    self.frase.set_text('ha abierto una casilla con bomba, ha perdido')
+                    return True
+        
+    def tablero_final(self):
+        for i in range(self.filas):
+            for j in range(self.columnas):
+                if self.tabla[i][j].marcada and self.tabla[i][j].detras:
+                    pass
+                elif  not self.tabla[i][j].cerrada and self.tabla[i][j].detras:
+                    self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[12])
+                elif self.tabla[i][j].detras:
+                    self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[11])
+                else:
+                    self.tabla[i][j].boton.get_image().set_from_pixbuf(self.imagenes[0])
 class Buscaminas:
     def __init__(self):
         self.menu = self.menu()
         self.ventana_juego = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.fin = self.fin_juego()
         self.tabla = None
-        self.label = "Mensaje prueba"
+        self.Frase=gtk.Label(' ')
     def menu(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("Menu principal")
@@ -245,9 +280,10 @@ class Buscaminas:
         return window
 
     def rellenar_ventana(self,widget,filas,columnas,bombas,fichero=None):
+        self.Frase.set_text(' ')
         self.menu.hide()
         if fichero == None:
-            self.tabla = Tablero(filas,columnas,bombas) if fichero == None else self.abrir_fichero(fichero)
+            self.tabla = Tablero(filas,columnas,bombas,self.Frase) if fichero == None else self.abrir_fichero(fichero)
         else:
             self.tabla = self.abrir_fichero(fichero)
         ancho = self.tabla.columnas*24
@@ -279,9 +315,9 @@ class Buscaminas:
                 else:
                     fixed.put(self.tabla.tabla[j][i].boton, i*19+9, j*19)
         
-        Frase_errores=gtk.Label(self.label)
-        Frase_errores.show()
-        fixed.put(Frase_errores,self.tabla.columnas,self.tabla.filas*19+30)
+        
+        self.Frase.show()
+        fixed.put(self.Frase,self.tabla.columnas,self.tabla.filas*19+30)
         
         button=gtk.Button("Salir")
         button.connect("clicked",self.cerrar_ventjuego)
@@ -306,7 +342,7 @@ class Buscaminas:
         posicion_bombas = [(f,c) for (f,lin) in zip(range(nf),txt[1:])
             for (c,ch) in zip(range(nc),lin)
             if ch == "*"]
-        t = Tablero(int(fila),int(columna),0)
+        t = Tablero(int(fila),int(columna),0,self.Frase)
         for i in range(len(posicion_bombas)):
             t.tabla[posicion_bombas[i][0]][posicion_bombas[i][1]].detras = True
         return t
@@ -336,6 +372,7 @@ class Buscaminas:
         dlg.destroy()
         self.rellenar_ventana(None,0,0,0,nombre)
         
+    
 
 def main():
     gtk.main()

@@ -293,31 +293,22 @@ class Buscaminas:
         button.show()
         self.ventana_juego.show()
     
-    def abrir_fichero(self,nfichero):
-        t = Tablero(0,0,0)
-        columnas = filas = 0
-        print nfichero
-        f = open(nfichero)
-        linea = list(f.readline())
-        while linea[0]!= ' ':
-            columnas = int(str(columnas)+str(linea[0]))
-            linea.pop(0)
-        linea.remove(' ')
-        linea.remove('\n')
-        for i in range(len(linea)):
-            filas = int(str(filas)+linea[i])
-        t.tabla = [[ Celda(t.crear_boton(),t.imagenes) for i in range (columnas)]for j in range (filas)]
-        x = 0
-        for i in range(filas):
-            linea = f.readline()
-            for j in range(columnas):
-                if linea[j] == '*':
-                    t.tabla[i][j].detras = True
-                    x += 1
-                else:
-                    t.tabla[i][j].detras = False
-        t.cant_bombas = x
-        f.close()
+    def abrir_fichero (self,nomfich):
+        fich = open(nomfich)
+        a = fich.readline()
+        [fila,columna]= a.split(' ')
+        fich.close()
+        fich = open(nomfich)
+        hola = fich.read()
+        txt = hola.split('\n')
+        fich.close()
+        [nf,nc] = map(int, txt[0].split(' '))
+        posicion_bombas = [(f,c) for (f,lin) in zip(range(nf),txt[1:])
+            for (c,ch) in zip(range(nc),lin)
+            if ch == "*"]
+        t = Tablero(int(fila),int(columna),0)
+        for i in range(len(posicion_bombas)):
+            t.tabla[posicion_bombas[i][0]][posicion_bombas[i][1]].detras = True
         return t
 
     def fin_juego(self):
